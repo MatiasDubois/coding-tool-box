@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CohortController;
 use App\Http\Controllers\CommonLifeController;
+use App\Http\Controllers\CommonLifeTaskController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RetroController;
@@ -45,6 +46,13 @@ Route::middleware('auth')->group(function () {
 
         // Common life
         Route::get('common-life', [CommonLifeController::class, 'index'])->name('common-life.index');
+
+        // Common life task
+        Route::get('common-life/task', [CommonLifeTaskController::class, 'index'])->name('tasks.index');
+        Route::post('common-life/task', [CommonLifeTaskController::class, 'store'])->name('tasks.store');
+        Route::put('common-life/task/{task}', [CommonLifeTaskController::class, 'update'])->name('tasks.update');
+        Route::delete('common-life/task/{task}', [CommonLifeTaskController::class, 'destroy'])->name('tasks.destroy');
+
     });
 
 });
