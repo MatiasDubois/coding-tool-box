@@ -97,6 +97,19 @@
                     <small style="color: #6b7280;">Modifié {{ $task->updated_at->diffForHumans() }}</small>
                 </div>
 
+                <!-- Promotions associées -->
+                @if($task->cohorts->isNotEmpty())
+                    <div style="margin-top: 0.5rem;">
+                        <strong style="font-size: 0.875rem; color: #4b5563;">Promotions :</strong>
+                        <ul style="list-style: disc; margin-left: 1.5rem; color: #374151; font-size: 0.875rem;">
+                            @foreach($task->cohorts as $cohort)
+                                <li>{{ $cohort->school->name }} – {{ $cohort->description }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+
                 <!-- Actions -->
                 <div style="text-align: right; margin-top: 1rem;">
                     <form method="POST" action="{{ route('tasks.destroy', $task->id) }}" style="display:inline-block;">
@@ -138,6 +151,18 @@
                         <textarea name="task_description" rows="3"
                                   style="width: 100%; margin-bottom: 0.5rem;
                                          padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">{{ $task->task_description }}</textarea>
+
+                        <label for="cohorts" class="block text-sm font-medium text-gray-700">Promotions associées</label>
+                        <select name="cohorts[]" multiple>
+                            @foreach($cohorts as $cohort)
+                                <option value="{{ $cohort->id }}"
+                                    {{ $task->cohorts->contains($cohort->id) ? 'selected' : '' }}>
+                                    {{ $cohort->description }}
+                                </option>
+                            @endforeach
+                        </select>
+
+
 
                         <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
                             <button type="submit"

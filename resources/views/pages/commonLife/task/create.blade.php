@@ -1,6 +1,5 @@
 <x-app-layout>
     <x-slot name="header">
-        <!-- Tu peux ajouter du contenu ici si besoin -->
     </x-slot>
 
     <div style="
@@ -74,6 +73,14 @@
                     "
                 ></textarea>
             </div>
+
+            <!-- Promotions -->
+            <label for="cohorts">Promotions associées</label>
+            <select name="cohorts[]" multiple class="form-select">
+                @foreach ($cohorts as $cohort)
+                    <option value="{{ $cohort->id }}">{{ $cohort->description }}</option>
+                @endforeach
+            </select>
 
             <!-- Boutons -->
             <div style="display: flex; justify-content: flex-end; gap: 1rem;">
