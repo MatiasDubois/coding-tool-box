@@ -13,17 +13,31 @@ class CommonLifeTaskController extends Controller
 {
     public function index(Request $request)
     {
-        $sort = $request->get('sort', 'updated_at');
-        $order = $request->get('order', 'desc');
+        $allowedSorts = ['task_title', 'created_at', 'updated_at', 'promotions'];
+        $sort = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'updated_at';
+        $order = $request->get('direction') === 'asc' ? 'asc' : 'desc';
+        $search = $request->get('search');
 
-        $tasks = Task::orderBy($sort, $order)->paginate(10);
+        $query = Task::with('cohorts.school');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('task_title', 'like', '%' . $search . '%')
+                    ->orWhere('task_description', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($sort === 'promotions') {
+            $query = $query->withCount('cohorts')->orderBy('cohorts_count', $order);
+        } else {
+            $query = $query->orderBy($sort, $order);
+        }
+
+        $perPage = request('perpage', 10);
+        $tasks = $query->paginate($perPage)->withQueryString();
         $cohorts = Cohort::all();
 
-        $tasks = Task::with('cohorts.school')
-            ->orderBy($sort, $order)
-            ->paginate(10);
-
-        return view('pages.commonLife.task.index', compact('tasks', 'cohorts'));
+        return view('pages.commonLife.task.index', compact('tasks', 'cohorts', 'sort', 'order'));
     }
 
     public function create()
