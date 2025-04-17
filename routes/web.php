@@ -49,7 +49,9 @@ Route::middleware('auth')->group(function () {
 
         // Common life task
         Route::get('common-life/task', [CommonLifeTaskController::class, 'index'])->name('tasks.index');
+        Route::get('common-life/task/create', [CommonLifeTaskController::class, 'create'])->name('tasks.create');
         Route::post('common-life/task', [CommonLifeTaskController::class, 'store'])->name('tasks.store');
+        Route::get('common-life/task/{task}/edit', [CommonLifeTaskController::class, 'edit'])->name('tasks.edit');
         Route::put('common-life/task/{task}', [CommonLifeTaskController::class, 'update'])->name('tasks.update');
         Route::delete('common-life/task/{task}', [CommonLifeTaskController::class, 'destroy'])->name('tasks.destroy');
 

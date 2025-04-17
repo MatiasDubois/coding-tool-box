@@ -84,6 +84,42 @@
 <script src="{{ asset('metronic/js/core.bundle.js') }}"></script>
 <script src="{{ asset('metronic/vendors/apexcharts/apexcharts.min.js') }}"></script>
 <script src="{{ asset('metronic/js/widgets/general.js') }}"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("JS is loaded!");
+        document.querySelectorAll("[data-modal-target]").forEach(button => {
+            button.addEventListener("click", () => {
+                const modalId = button.getAttribute("data-modal-target");
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove("hidden");
+                    modal.classList.add("flex");
+                }
+            });
+        });
+
+        document.querySelectorAll("[data-modal-dismiss]").forEach(button => {
+            button.addEventListener("click", () => {
+                const modal = button.closest(".modal");
+                if (modal) {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                }
+            });
+        });
+
+        document.querySelectorAll(".modal").forEach(modal => {
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                }
+            });
+        });
+    });
+</script>
+
 <!-- End of Scripts -->
 </body>
 </html>
