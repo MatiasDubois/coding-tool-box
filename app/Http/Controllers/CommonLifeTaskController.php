@@ -17,13 +17,37 @@ class CommonLifeTaskController extends Controller
         $sort = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'updated_at';
         $order = $request->get('direction') === 'asc' ? 'asc' : 'desc';
         $search = $request->get('search');
+        $perPage = request('perpage', 10);
 
-        $query = Task::with(['cohorts.school', 'users']);
+        $user = auth()->user();
+        $school = $user->school();
+        $role = $school?->pivot->role ?? 'student';
+
+        $query = Task::with(['cohorts.school', 'users' => function ($q) {
+            $q->wherePivotNull('validated_at');
+        }]);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('task_title', 'like', '%' . $search . '%')
                     ->orWhere('task_description', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($role === 'student') {
+            $cohortIds = $user->cohorts_from_tasks->pluck('id');
+
+            $query->whereHas('cohorts', function ($q) use ($cohortIds) {
+                $q->whereIn('cohorts.id', $cohortIds);
+            });
+
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->whereNull('task_user.validated_at');
+            });
+        } else {
+            $query->whereDoesntHave('users', function ($q) {
+                $q->whereNotNull('task_user.validated_at');
             });
         }
 
@@ -33,9 +57,7 @@ class CommonLifeTaskController extends Controller
             $query = $query->orderBy($sort, $order);
         }
 
-        $perPage = request('perpage', 10);
         $tasks = $query->paginate($perPage)->withQueryString();
-        $tasks->load('users');
         $cohorts = Cohort::all();
 
         return view('pages.commonLife.task.index', compact('tasks', 'cohorts', 'sort', 'order'));
@@ -61,15 +83,12 @@ class CommonLifeTaskController extends Controller
         if ($request->filled('cohorts')){
             $task->cohorts()->sync($request->cohorts);
         }
-
         return redirect()->route('tasks.index')->with('success', 'Tâche crée avec succès !');
     }
 
-    public function edit (Task $task, $id)
+    public function edit (Task $task)
     {
-        $task = Task::findOrFail($id);
         $cohorts = Cohort::all();
-
         return view('pages.commonLife.task.edit', compact('task', 'cohorts'));
     }
 
@@ -88,7 +107,6 @@ class CommonLifeTaskController extends Controller
             $task->cohorts()->sync($request->input('cohorts'));
             $task->touch();
         }
-
         return redirect()->route('tasks.index')->with('success', 'Tâche modifiée avec succès !');
     }
 
@@ -114,7 +132,6 @@ class CommonLifeTaskController extends Controller
         $task->users()->syncWithoutDetaching([
             $user->id => ['validated_at' => now()]
         ]);
-
         return back()->with('status', 'Tâche marquée comme terminée.');
     }
 
@@ -129,7 +146,68 @@ class CommonLifeTaskController extends Controller
         $task->users()->syncWithoutDetaching([
             $userId => ['comment' => $request->comment]
         ]);
-
         return redirect()->back()->with('success', 'Commentaire ajouté avec succès.');
+    }
+
+    public function history(Request $request)
+    {
+        $user = auth()->user();
+        $role = $user->school()?->pivot->role ?? 'student';
+
+        $allowedSorts = ['task_title', 'created_at', 'updated_at', 'promotions'];
+        $sort = in_array($request->get('sort'), $allowedSorts) ? $request->get('sort') : 'updated_at';
+        $order = $request->get('direction') === 'asc' ? 'asc' : 'desc';
+        $search = $request->get('search');
+        $perPage = $request->get('perpage', 10);
+
+        $cohorts = Cohort::all(); // utile pour les filtres futurs si besoin
+
+        if ($role === 'student') {
+            // Récupère les tâches validées liées aux promotions de l’étudiant
+            $validatedTasks = $user->tasks()
+                ->wherePivotNotNull('validated_at')
+                ->whereHas('cohorts', function ($q) use ($user) {
+                    $q->whereIn('cohorts.id', $user->cohorts_from_tasks->pluck('id'));
+                })
+                ->with(['cohorts.school'])
+                ->orderByDesc('pivot_validated_at')
+                ->paginate($perPage);
+
+            $items = $validatedTasks;
+        } else {
+            // Pour enseignants/admins
+            $query = Task::with(['cohorts.school', 'users']);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('task_title', 'like', "%$search%")
+                        ->orWhere('task_description', 'like', "%$search%");
+                });
+            }
+
+            $query->whereHas('users', function ($q) {
+                $q->whereNotNull('task_user.validated_at');
+            });
+
+            if ($sort === 'promotions') {
+                $query->withCount('cohorts')->orderBy('cohorts_count', $order);
+            } else {
+                $query->orderBy($sort, $order);
+            }
+
+            $validatedTasks = $query->paginate($perPage);
+            $items = $validatedTasks;
+        }
+        return view('pages.commonLife.task.history', compact('items', 'cohorts', 'sort', 'order', 'role'));
+    }
+
+    public function unvalidate(Task $task, $userId)
+    {
+        $task->users()->updateExistingPivot($userId, [
+            'validated_at' => null,
+            'comment' => null,
+        ]);
+
+        return back()->with('success', 'Validation annulée avec succès.');
     }
 }

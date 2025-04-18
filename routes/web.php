@@ -56,10 +56,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('common-life/task/{task}', [CommonLifeTaskController::class, 'destroy'])->name('tasks.destroy');
         Route::post('common-life/tasks/{task}/toggle-complete', [CommonLifeTaskController::class, 'toggleComplete'])->name('tasks.toggleComplete');
         Route::post('common-life/tasks/{task}/comment', [CommonLifeTaskController::class, 'comment'])->name('tasks.comment');
-
-
+        Route::get('common-life/task/history' , [CommonLifeTaskController::class, 'history'])->name('tasks.history');
+        Route::patch('common-life/tasks/{task}/unvalidate/{user}', [CommonLifeTaskController::class, 'unvalidate'])->name('tasks.unvalidate');
     });
-
 });
 
 require __DIR__.'/auth.php';

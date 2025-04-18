@@ -89,4 +89,16 @@ class User extends Authenticatable
             ->using(TaskUserPivot::class)
             ->withTimestamps();
     }
+
+    public function getCohortsFromTasksAttribute()
+    {
+        if (!$this->relationLoaded('tasks')) {
+            $this->load('tasks.cohorts');
+        }
+
+        return $this->tasks
+            ->flatMap(fn ($task) => $task->cohorts ?? collect())
+            ->unique('id')
+            ->values();
+    }
 }
