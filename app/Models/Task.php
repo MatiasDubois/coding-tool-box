@@ -13,4 +13,11 @@ class Task extends Model
         return $this->belongsToMany(Cohort::class, 'cohort_task');
     }
 
+    public function users()
+    {
+        return $this->belongsToMany(User::class)
+                    ->withPivot('validated_at' , 'comment')
+                    ->using(TaskUserPivot::class)
+                    ->withTimestamps();
+    }
 }

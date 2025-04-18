@@ -54,6 +54,9 @@ Route::middleware('auth')->group(function () {
         Route::get('common-life/task/{task}/edit', [CommonLifeTaskController::class, 'edit'])->name('tasks.edit');
         Route::put('common-life/task/{task}', [CommonLifeTaskController::class, 'update'])->name('tasks.update');
         Route::delete('common-life/task/{task}', [CommonLifeTaskController::class, 'destroy'])->name('tasks.destroy');
+        Route::post('common-life/tasks/{task}/toggle-complete', [CommonLifeTaskController::class, 'toggleComplete'])->name('tasks.toggleComplete');
+        Route::post('common-life/tasks/{task}/comment', [CommonLifeTaskController::class, 'comment'])->name('tasks.comment');
+
 
     });
 

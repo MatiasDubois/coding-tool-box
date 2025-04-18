@@ -18,7 +18,7 @@ class CommonLifeTaskController extends Controller
         $order = $request->get('direction') === 'asc' ? 'asc' : 'desc';
         $search = $request->get('search');
 
-        $query = Task::with('cohorts.school');
+        $query = Task::with(['cohorts.school', 'users']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -35,6 +35,7 @@ class CommonLifeTaskController extends Controller
 
         $perPage = request('perpage', 10);
         $tasks = $query->paginate($perPage)->withQueryString();
+        $tasks->load('users');
         $cohorts = Cohort::all();
 
         return view('pages.commonLife.task.index', compact('tasks', 'cohorts', 'sort', 'order'));
@@ -95,5 +96,40 @@ class CommonLifeTaskController extends Controller
     {
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Tâche supprimée avec succès !');
+    }
+
+    public function toggleComplete(Task $task)
+    {
+        $user = auth()->user();
+        $pivot = $task->users()->where('user_id', $user->id)->first()?->pivot;
+
+        if ($pivot && $pivot->validated_at !== null) {
+            $task->users()->updateExistingPivot($user->id, [
+                'validated_at' => null,
+            ]);
+
+            return back()->with('status', 'Validation annulée.');
+        }
+
+        $task->users()->syncWithoutDetaching([
+            $user->id => ['validated_at' => now()]
+        ]);
+
+        return back()->with('status', 'Tâche marquée comme terminée.');
+    }
+
+    public function comment(Request $request, Task $task)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:1000',
+        ]);
+
+        $userId = auth()->id();
+
+        $task->users()->syncWithoutDetaching([
+            $userId => ['comment' => $request->comment]
+        ]);
+
+        return redirect()->back()->with('success', 'Commentaire ajouté avec succès.');
     }
 }

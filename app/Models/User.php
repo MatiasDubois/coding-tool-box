@@ -81,4 +81,12 @@ class User extends Authenticatable
             ->withPivot('role')
             ->first();
     }
+
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class)
+            ->withPivot('validated_at', 'comment')
+            ->using(TaskUserPivot::class)
+            ->withTimestamps();
+    }
 }

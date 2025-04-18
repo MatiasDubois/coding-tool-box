@@ -98,30 +98,104 @@
                                             @endif
                                         </td>
                                         <td style="text-align: right;">
+                                            @php
+                                                $user = auth()->user();
+                                                $pivot = $task->users->find($user->id)?->pivot;
+                                                $isValidated = $pivot?->validated_at !== null;
+                                            @endphp
+
+                                        @if(in_array(auth()->user()->last_name, ['Student', 'Admin', 'Teacher']))
+                                                <form method="POST" action="{{ route('tasks.toggleComplete', $task->id) }}" style="display:inline-block;" onsubmit="return confirmToggle('{{ $task->task_title }}', {{ $isValidated ? 'true' : 'false' }});">
+                                                    @csrf
+                                                    <button type="submit"
+                                                            style="padding: 0.4rem 0.75rem;
+                                                            background-color: {{ $isValidated ? '#bbf7d0' : '#fef3c7'}};
+                                                            color: {{ $isValidated ? '#065f46' : '#92400e'}};
+                                                            border-radius: 0.375rem;
+                                                            margin-right: 0.5rem;
+                                                            cursor: pointer;">
+                                                        {{ $isValidated ? 'Terminé' : 'En Cours' }}
+                                                    </button>
+                                                </form>
+                                            @endif
+
+                                            <button onclick="toggleComment('{{ $task->id }}')"
+                                                    style="padding: 0.4rem 0.75rem;
+                                                    background-color: #f0f9ff;
+                                                    color: #0284c7;
+                                                    border: none;
+                                                    border-radius: 0.375rem;
+                                                    cursor: pointer;
+                                                    margin-right: 0.5rem;">
+                                                Commenter
+                                            </button>
+
+
                                             <form method="POST" action="{{ route('tasks.destroy', $task->id) }}" style="display:inline-block;">
-                                                @csrf
-                                                @method('DELETE')
+                                            @csrf
+                                            @method('DELETE')
                                                 <button type="submit"
                                                         style="padding: 0.4rem 0.75rem;
-                                                               background-color: #fecaca;
-                                                               color: #991b1b;
-                                                               border: none;
-                                                               border-radius: 0.375rem;
-                                                               margin-right: 0.5rem;
-                                                               cursor: pointer;">
+                                                        background-color: #fecaca;
+                                                        color: #991b1b;
+                                                        border: none;
+                                                        border-radius: 0.375rem;
+                                                        margin-right: 0.5rem;
+                                                        cursor: pointer;">
                                                     Supprimer
                                                 </button>
                                             </form>
-
                                             <button onclick="toggleEdit('{{ $task->id }}')"
                                                     style="padding: 0.4rem 0.75rem;
-                                                           background-color: #dbeafe;
-                                                           color: #1d4ed8;
-                                                           border: none;
-                                                           border-radius: 0.375rem;
-                                                           cursor: pointer;">
+                                                    background-color: #dbeafe;
+                                                    color: #1d4ed8;
+                                                    border: none;
+                                                    border-radius: 0.375rem;
+                                                    cursor: pointer;">
                                                 Modifier
                                             </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Formulaire de commentaire caché -->
+                                    <tr id="comment-form-{{ $task->id }}" class="hidden">
+                                        <td colspan="6">
+                                            <!-- Affichage des commentaires existants -->
+                                            @if($task->users->whereNotNull('pivot.comment')->isNotEmpty())
+                                                <div class="mb-4 border-t pt-3">
+                                                    <h4 class="text-sm font-semibold mb-2">Commentaires existants :</h4>
+                                                    <ul class="space-y-2">
+                                                        @foreach($task->users as $user)
+                                                            @if($user->pivot->comment)
+                                                                <li class="bg-gray-50 p-2 rounded">
+                                                                    <strong>{{ $user->first_name }} {{ $user->last_name }}:</strong>
+                                                                    <p class="text-sm text-gray-700">{{ $user->pivot->comment }}</p>
+                                                                </li>
+                                                            @endif
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
+
+
+                                            <form method="POST" action="{{ route('tasks.comment', $task->id) }}">
+                                                @csrf
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire :</label>
+                                                <textarea name="comment" rows="3"
+                                                          class="w-full border border-gray-300 rounded p-2 mb-3"
+                                                          placeholder="Écrivez votre commentaire..."></textarea>
+
+                                                <div class="flex justify-end gap-2">
+                                                    <button type="submit"
+                                                            class="px-4 py-2 bg-blue-100 text-blue-700 rounded">
+                                                        Enregistrer
+                                                    </button>
+                                                    <button type="button" onclick="toggleComment('{{ $task->id }}')"
+                                                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded">
+                                                        Annuler
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </td>
                                     </tr>
 
@@ -247,4 +321,21 @@
             }
         });
     </script>
+
+    <script>
+        function confirmToggle(taskTitle, alreadyValidated) {
+            if (alreadyValidated) {
+                return confirm("Souhaitez-vous vraiment annuler la validation de cette tâche : \"" + taskTitle + "\" ?");
+            }
+            return true; // pas de confirmation si c’est une première validation
+        }
+    </script>
+
+    <script>
+        function toggleComment(id) {
+            const row = document.getElementById('comment-form-' + id);
+            row.classList.toggle('hidden');
+        }
+    </script>
+
 </x-app-layout>
