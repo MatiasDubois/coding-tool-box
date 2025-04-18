@@ -141,10 +141,11 @@
                                                                  padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">{{ $task->task_description }}</textarea>
 
                                                 <label style="font-weight: bold;">Promotions associées</label>
-                                                <select name="cohorts[]" multiple style="width: 100%; margin-bottom: 0.5rem; padding: 0.4rem;">
+                                                <select id="cohort-select-{{ $task->id }}" name="cohorts[]" multiple
+                                                        style="width: 100%; margin-bottom: 0.5rem; padding: 0.5rem; height: 200px; font-size: 0.875rem;">
                                                     @foreach($cohorts as $cohort)
                                                         <option value="{{ $cohort->id }}"
-                                                            {{ $task->cohorts->contains($cohort->id) ? 'selected' : '' }}>
+                                                                style="padding: 0.5rem; margin-bottom: 0.3rem;">
                                                             {{ $cohort->description }}
                                                         </option>
                                                     @endforeach
@@ -192,8 +193,6 @@
                                         @endforeach
                                     </select>
                                     par page
-
-                                    {{-- On garde les autres paramètres pour pas perdre la recherche/tri --}}
                                     <input type="hidden" name="search" value="{{ request('search') }}">
                                     <input type="hidden" name="sort" value="{{ request('sort') }}">
                                     <input type="hidden" name="direction" value="{{ request('direction') }}">
@@ -215,10 +214,37 @@
         </div>
     </div>
 
+    <!-- JavaScript -->
     <script>
         function toggleEdit(id) {
             const row = document.getElementById('edit-form-' + id);
             row.classList.toggle('hidden');
         }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('select[multiple]').forEach(function(select) {
+                select.addEventListener('mousedown', function (e) {
+                    e.preventDefault();
+                    const option = e.target;
+                    if (option.tagName.toLowerCase() === 'option') {
+                        option.selected = !option.selected;
+                        updateOptionStyles(select);
+                    }
+                });
+
+                // Appliquer les styles initiaux
+                updateOptionStyles(select);
+            });
+
+            function updateOptionStyles(select) {
+                Array.from(select.options).forEach(function (option) {
+                    option.style.backgroundColor = option.selected ? '#e5e7eb' : 'white';
+                    option.style.color = '#111827'; // texte noir (tailwind: text-gray-900)
+                    option.style.fontWeight = '500';
+                });
+            }
+        });
     </script>
 </x-app-layout>
