@@ -82,6 +82,7 @@ class User extends Authenticatable
             ->first();
     }
 
+    // Relation with Task
     public function tasks()
     {
         return $this->belongsToMany(Task::class)
@@ -90,6 +91,7 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    // Get all cohorts from tasks (not working well)
     public function getCohortsFromTasksAttribute()
     {
         if (!$this->relationLoaded('tasks')) {

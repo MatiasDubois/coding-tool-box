@@ -5,7 +5,6 @@
         </h1>
     </x-slot>
 
-    <!-- begin: grid -->
     <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
         <div class="lg:col-span-3">
             <div class="grid">
@@ -13,6 +12,7 @@
                     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                         <h3 class="card-title">Liste des tâches</h3>
 
+                        <!--History task button-->
                         <a href="{{ route('tasks.history') }}" class="card-title">
                             Historique
                         </a>
@@ -27,6 +27,7 @@
                                 <button type="submit" class="btn btn-sm bg-blue-100 text-blue-700 rounded px-3">Rechercher</button>
                             </form>
 
+                            <!-- Create task button -->
                             <a href="{{ route('tasks.create') }}"
                                style="padding: 0.5rem 1rem;
                                background-color: #dbeafe;
@@ -37,12 +38,21 @@
                             </a>
                         </div>
                     </div>
+                    <!-- Main card body containing the tasks table and pagination -->
                     <div class="card-body">
+                        <!-- Horizontally scrollable container for the table -->
                         <div class="scrollable-x-auto">
+                            <!-- Tasks table with borders -->
                             <table class="table table-border">
+                                <!-- Table header section -->
                                 <thead>
                                 <tr>
+                                    <!-- Sortable column headers -->
+                                    <!-- Each header contains a link that toggles sort direction and maintains search parameters -->
+
+                                    <!-- Title column - sortable by task_title -->
                                     <th>
+                                        <!-- Column header with sort functionality and direction indicator -->
                                         <a href="{{ route('tasks.index', ['sort' => 'task_title', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc' , 'search' => request('search')]) }}"
                                            style="display: flex; align-items: center; gap: 4px;">
                                             Titre
@@ -51,7 +61,11 @@
                                             @endif
                                         </a>
                                     </th>
+
+                                    <!-- Description column - not sortable -->
                                     <th>Description</th>
+
+                                    <!-- Created at column - sortable by created_at -->
                                     <th>
                                         <a href="{{ route('tasks.index', ['sort' => 'created_at', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc' , 'search' => request('search')]) }}">
                                             Créé le
@@ -60,6 +74,8 @@
                                             @endif
                                         </a>
                                     </th>
+
+                                    <!-- Last modified column - sortable by updated_at -->
                                     <th>
                                         <a href="{{ route('tasks.index', ['sort' => 'updated_at', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc' , 'search' => request('search')]) }}">
                                             Dernière modification
@@ -69,6 +85,7 @@
                                         </a>
                                     </th>
 
+                                    <!-- Promotions column - sortable -->
                                     <th>
                                         <a href="{{ route('tasks.index', ['sort' => 'promotions', 'direction' => request('direction') === 'asc' ? 'desc' : 'asc' , 'search' => request('search')]) }}"
                                            style="display: flex; align-items: center; gap: 4px;">
@@ -78,16 +95,24 @@
                                             @endif
                                         </a>
                                     </th>
+
+                                    <!-- Actions column - not sortable -->
                                     <th>Actions</th>
                                 </tr>
                                 </thead>
+                                <!-- Table body section -->
                                 <tbody>
+                                <!-- Loop through each task -->
                                 @foreach($tasks as $task)
+                                    <!-- Task row -->
                                     <tr>
+                                        <!-- Display task information in columns -->
                                         <td>{{ $task->task_title }}</td>
                                         <td>{{ $task->task_description }}</td>
                                         <td>{{ $task->created_at->format('d/m/Y H:i') }}</td>
                                         <td>{{ $task->updated_at->diffForHumans() }}</td>
+
+                                        <!-- Associated promotions list -->
                                         <td>
                                             @if($task->cohorts->isNotEmpty())
                                                 <ul style="list-style: disc; margin-left: 1rem; font-size: 0.875rem;">
@@ -99,14 +124,18 @@
                                                 <em>Aucune</em>
                                             @endif
                                         </td>
+
+                                        <!-- Action buttons column -->
                                         <td style="text-align: right;">
+                                            <!-- Get user validation status -->
                                             @php
                                                 $user = auth()->user();
                                                 $pivot = $task->users->find($user->id)?->pivot;
                                                 $isValidated = $pivot?->validated_at !== null;
                                             @endphp
 
-                                        @if(in_array(auth()->user()->last_name, ['Student', 'Admin', 'Teacher']))
+                                            <!-- Display complete/incomplete toggle button for authorized roles -->
+                                            @if(in_array(auth()->user()->last_name, ['Student', 'Admin', 'Teacher']))
                                                 <form method="POST" action="{{ route('tasks.toggleComplete', $task->id) }}" style="display:inline-block;" onsubmit="return confirmToggle('{{ $task->task_title }}', {{ $isValidated ? 'true' : 'false' }});">
                                                     @csrf
                                                     <button type="submit"
@@ -121,6 +150,7 @@
                                                 </form>
                                             @endif
 
+                                            <!-- Comment button -->
                                             <button onclick="toggleComment('{{ $task->id }}')"
                                                     style="padding: 0.4rem 0.75rem;
                                                     background-color: #f0f9ff;
@@ -132,7 +162,7 @@
                                                 Commenter
                                             </button>
 
-
+                                            <!-- Delete button -->
                                             <form method="POST" action="{{ route('tasks.destroy', $task->id) }}" style="display:inline-block;">
                                             @csrf
                                             @method('DELETE')
@@ -147,6 +177,8 @@
                                                     Supprimer
                                                 </button>
                                             </form>
+
+                                            <!-- Edit button -->
                                             <button onclick="toggleEdit('{{ $task->id }}')"
                                                     style="padding: 0.4rem 0.75rem;
                                                     background-color: #dbeafe;
@@ -159,10 +191,10 @@
                                         </td>
                                     </tr>
 
-                                    <!-- Formulaire de commentaire caché -->
+                                    <!-- Hidden comment form row -->
                                     <tr id="comment-form-{{ $task->id }}" class="hidden">
                                         <td colspan="6">
-                                            <!-- Affichage des commentaires existants -->
+                                            <!-- Shows existing comments -->
                                             @if($task->users->whereNotNull('pivot.comment')->isNotEmpty())
                                                 <div class="mb-4 border-t pt-3">
                                                     <h4 class="text-sm font-semibold mb-2">Commentaires existants :</h4>
@@ -179,13 +211,15 @@
                                                 </div>
                                             @endif
 
-
+                                            <!-- Form to add new comment -->
                                             <form method="POST" action="{{ route('tasks.comment', $task->id) }}">
                                                 @csrf
                                                 <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire :</label>
+
                                                 <textarea name="comment" rows="3"
                                                           class="w-full border border-gray-300 rounded p-2 mb-3"
-                                                          placeholder="Écrivez votre commentaire..."></textarea>
+                                                          placeholder="Écrivez votre commentaire...">
+                                                </textarea>
 
                                                 <div class="flex justify-end gap-2">
                                                     <button type="submit"
@@ -201,16 +235,17 @@
                                         </td>
                                     </tr>
 
-                                    <!-- Formulaire de modification caché -->
+                                    <!-- Hidden edit form row -->
                                     <tr id="edit-form-{{ $task->id }}" class="hidden">
                                         <td colspan="6">
+                                            <!-- Form to edit task details -->
                                             <form method="POST" action="{{ route('tasks.update', $task->id) }}">
                                                 @csrf
                                                 @method('PUT')
 
                                                 <input type="text" name="task_title" value="{{ $task->task_title }}"
                                                        style="width: 100%; margin-bottom: 0.5rem;
-                                                              padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;" required>
+                                                       padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;" required>
 
                                                 <textarea name="task_description" rows="3"
                                                           style="width: 100%; margin-bottom: 0.5rem;
@@ -258,7 +293,7 @@
                             {{ $tasks->withQueryString()->links() }}
                         </div>
 
-                        <!-- Footer de pagination personnalisé -->
+                        <!-- Pagination Footer -->
                         <div class="card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium flex mt-4">
                             <div class="flex items-center gap-2 order-2 md:order-1">
                                 Afficher
@@ -309,15 +344,13 @@
                         updateOptionStyles(select);
                     }
                 });
-
-                // Appliquer les styles initiaux
                 updateOptionStyles(select);
             });
 
             function updateOptionStyles(select) {
                 Array.from(select.options).forEach(function (option) {
                     option.style.backgroundColor = option.selected ? '#e5e7eb' : 'white';
-                    option.style.color = '#111827'; // texte noir (tailwind: text-gray-900)
+                    option.style.color = '#111827';
                     option.style.fontWeight = '500';
                 });
             }
@@ -329,7 +362,7 @@
             if (alreadyValidated) {
                 return confirm("Souhaitez-vous vraiment annuler la validation de cette tâche : \"" + taskTitle + "\" ?");
             }
-            return true; // pas de confirmation si c’est une première validation
+            return true;
         }
     </script>
 

@@ -127,7 +127,7 @@
                             {{ $items->withQueryString()->links() }}
                         </div>
 
-                        <!-- Footer de pagination personnalisé -->
+                        <!-- Pagination footer -->
                         <div class="card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium flex mt-4">
                             <div class="flex items-center gap-2 order-2 md:order-1">
                                 Afficher

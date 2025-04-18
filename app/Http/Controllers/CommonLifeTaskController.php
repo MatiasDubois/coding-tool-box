@@ -11,6 +11,7 @@ use Illuminate\Mail\Transport\ResendTransport;
 
 class CommonLifeTaskController extends Controller
 {
+    // Main Function
     public function index(Request $request)
     {
         $allowedSorts = ['task_title', 'created_at', 'updated_at', 'promotions'];
@@ -63,12 +64,22 @@ class CommonLifeTaskController extends Controller
         return view('pages.commonLife.task.index', compact('tasks', 'cohorts', 'sort', 'order'));
     }
 
+    // Function to show all task
+    public function show(Task $task)
+    {
+        $user = auth()->user();
+        $school = $user->school();
+        $role = $school?->pivot->role ?? 'student';
+    }
+
+    // Function to create a task
     public function create()
     {
         $cohorts = Cohort::all();
         return view('pages.commonLife.task.create', compact('cohorts'));
     }
 
+    // Function to store a task
     public  function store(Request $request)
     {
         $request->validate([
@@ -86,12 +97,14 @@ class CommonLifeTaskController extends Controller
         return redirect()->route('tasks.index')->with('success', 'Tâche crée avec succès !');
     }
 
+    // Function to edit a task
     public function edit (Task $task)
     {
         $cohorts = Cohort::all();
         return view('pages.commonLife.task.edit', compact('task', 'cohorts'));
     }
 
+    // Function to update a task
     public function update(Request $request, Task $task)
     {
         $request->validate([
@@ -110,12 +123,14 @@ class CommonLifeTaskController extends Controller
         return redirect()->route('tasks.index')->with('success', 'Tâche modifiée avec succès !');
     }
 
+    // Function to delete a task
     public function destroy(Task $task)
     {
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Tâche supprimée avec succès !');
     }
 
+    //Function to toggle the status of the task (not working well)
     public function toggleComplete(Task $task)
     {
         $user = auth()->user();
@@ -135,6 +150,7 @@ class CommonLifeTaskController extends Controller
         return back()->with('status', 'Tâche marquée comme terminée.');
     }
 
+    // Function to create a comment
     public function comment(Request $request, Task $task)
     {
         $request->validate([
@@ -149,6 +165,7 @@ class CommonLifeTaskController extends Controller
         return redirect()->back()->with('success', 'Commentaire ajouté avec succès.');
     }
 
+    // Function for the history pages
     public function history(Request $request)
     {
         $user = auth()->user();
@@ -201,6 +218,7 @@ class CommonLifeTaskController extends Controller
         return view('pages.commonLife.task.history', compact('items', 'cohorts', 'sort', 'order', 'role'));
     }
 
+    // Function to remove a task in the history page (also not working well)
     public function unvalidate(Task $task, $userId)
     {
         $task->users()->updateExistingPivot($userId, [
